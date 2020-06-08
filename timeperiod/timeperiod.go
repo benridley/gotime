@@ -5,11 +5,10 @@ import (
 )
 
 type TimePeriod struct {
-	minutes []InclusiveRange
-	hours   []InclusiveRange
-	dates   []InclusiveRange
-	months  []InclusiveRange
-	days    []InclusiveRange
+	minutesInDay []InclusiveRange
+	dates        []InclusiveRange
+	months       []InclusiveRange
+	days         []InclusiveRange
 }
 
 type InclusiveRange struct {
@@ -18,39 +17,36 @@ type InclusiveRange struct {
 }
 
 func (tp TimePeriod) ContainsTime(t time.Time) bool {
-	if tp.minutes != nil {
-		for _, validMinutes := range tp.minutes {
-			if t.Minute() < validMinutes.begin || t.Minute() > validMinutes.end {
-				return false
+	if tp.minutesInDay != nil {
+		for _, validMinutes := range tp.minutesInDay {
+			if t.Minute() >= validMinutes.begin && t.Minute() < validMinutes.end {
+				break
 			}
-		}
-	}
-	if tp.hours != nil {
-		for _, validHours := range tp.hours {
-			if t.Hour() < validHours.begin || t.Hour() > validHours.end {
-				return false
-			}
+			return false
 		}
 	}
 	if tp.dates != nil {
 		for _, validDates := range tp.dates {
-			if t.Day() < validDates.begin || t.Hour() > validDates.end {
-				return false
+			if t.Day() >= validDates.begin && t.Day() <= validDates.end {
+				break
 			}
+			return false
 		}
 	}
 	if tp.months != nil {
 		for _, validMonths := range tp.months {
-			if t.Month() < time.Month(validMonths.begin) || t.Month() > time.Month(validMonths.end) {
-				return false
+			if t.Month() >= time.Month(validMonths.begin) && t.Month() <= time.Month(validMonths.end) {
+				break
 			}
+			return false
 		}
 	}
 	if tp.days != nil {
 		for _, validDays := range tp.days {
-			if t.Weekday() < time.Weekday(validDays.begin) || t.Weekday() > time.Weekday(validDays.end) {
-				return false
+			if t.Weekday() >= time.Weekday(validDays.begin) && t.Weekday() <= time.Weekday(validDays.end) {
+				break
 			}
+			return false
 		}
 	}
 	return true
