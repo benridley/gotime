@@ -1,0 +1,28 @@
+---
+time_intervals:
+  - name: business_hours
+    intervals:
+      - weekweekdays: ['monday-friday']
+        times: ['09:00:17:00']
+  - name: weekend_hours
+    intervals:
+      - weekdays: ['friday']
+        times: ['17:00:24:00']
+      - weekdays: ['saturday', 'sunday']
+      - weekdays: ['monday']
+        times: ['00:00:09:00']
+  - name: easter
+    intervals:
+      - days_of_month: ['4:6']
+        months: ['april']
+  - name: patch_tuesday_maintenance
+    intervals:
+      - weekdays: ['tuesday']
+        times: ['20:00:24:00']
+        days_of_month: ['8:14']
+        weekdays: ['wednesday']
+        times: ['00:00:03:00']
+        days_of_month: ['9:15']
+  - name: end_of_month_patching
+    days_of_month: ['-1']
+      weekdays: ["*/3"]
