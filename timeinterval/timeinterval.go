@@ -9,6 +9,8 @@ import (
 	"time"
 )
 
+// TimeInterval describes intervals of time. ContainsTime will tell you if a golang time is contained
+// within the interval.
 type TimeInterval struct {
 	Times       []timeRange       `yaml:"times"`
 	Weekdays    []weekdayRange    `yaml:"weekdays"`
@@ -55,16 +57,11 @@ type yamlTimeRange struct {
 	EndTime   string `yaml:"end_time"`
 }
 
-// A range with a beggining and end
-type _range interface {
-	setBegin(int)
-	setEnd(int)
-}
-
 // A range with a beginning and end that can be represented as strings
 type stringableRange interface {
-	_range
 	// Try to map a member of the range into an integer.
+	setBegin(int)
+	setEnd(int)
 	memberFromString(string) (int, error)
 }
 
@@ -74,6 +71,14 @@ func (ir *inclusiveRange) setBegin(n int) {
 
 func (ir *inclusiveRange) setEnd(n int) {
 	ir.end = n
+}
+
+func (ir *inclusiveRange) memberFromString(in string) (out int, err error) {
+	out, err = strconv.Atoi(in)
+	if err != nil {
+		return -1, err
+	}
+	return out, nil
 }
 
 func (r *weekdayRange) memberFromString(in string) (out int, err error) {
@@ -140,7 +145,7 @@ func (r *dayOfMonthRange) UnmarshalYAML(unmarshal func(interface{}) error) error
 	if err := unmarshal(&str); err != nil {
 		return err
 	}
-	err := rangeFromString(str, r)
+	err := stringableRangeFromString(str, r)
 	if r.begin > r.end {
 		return errors.New("Start day cannot be before end day")
 	}
@@ -176,7 +181,7 @@ func (r *yearRange) UnmarshalYAML(unmarshal func(interface{}) error) error {
 	if err := unmarshal(&str); err != nil {
 		return err
 	}
-	err := rangeFromString(str, r)
+	err := stringableRangeFromString(str, r)
 	if r.begin > r.end {
 		return errors.New("Start day cannot be before end day")
 	}
@@ -341,34 +346,6 @@ func parseTime(in string) (mins int, err error) {
 	return mins, nil
 }
 
-func rangeFromString(in string, r _range) (err error) {
-	in = strings.ToLower(in)
-	if strings.ContainsRune(in, ':') {
-		components := strings.Split(in, ":")
-		if len(components) != 2 {
-			return fmt.Errorf("Coudn't parse range %s, invalid format", in)
-		}
-		start, err := strconv.Atoi(components[0])
-		if err != nil {
-			return err
-		}
-		end, err := strconv.Atoi(components[1])
-		if err != nil {
-			return err
-		}
-		r.setBegin(start)
-		r.setEnd(end)
-		return nil
-	}
-	val, err := strconv.Atoi(in)
-	if err != nil {
-		return err
-	}
-	r.setBegin(val)
-	r.setEnd(val)
-	return nil
-}
-
 func stringableRangeFromString(in string, r stringableRange) (err error) {
 	in = strings.ToLower(in)
 	if strings.ContainsRune(in, ':') {
@@ -395,39 +372,4 @@ func stringableRangeFromString(in string, r stringableRange) (err error) {
 	r.setBegin(val)
 	r.setEnd(val)
 	return nil
-}
-
-func parseStringableRange(sr stringableRange, in string) (ir inclusiveRange, err error) {
-	in = strings.ToLower(in)
-	if strings.ContainsRune(in, ':') {
-		components := strings.Split(in, ":")
-		if len(components) != 2 {
-			return ir, fmt.Errorf("Coudn't parse range %s, invalid format", in)
-		}
-		start, err := sr.memberFromString(components[0])
-		if err != nil {
-			return ir, err
-		}
-		end, err := sr.memberFromString(components[1])
-		if err != nil {
-			return ir, err
-		}
-		if start > end {
-			return ir, fmt.Errorf("Start day cannot be after end day")
-		}
-		ir = inclusiveRange{
-			begin: start,
-			end:   end,
-		}
-		return ir, nil
-	}
-	val, err := sr.memberFromString(in)
-	if err != nil {
-		return ir, err
-	}
-	ir = inclusiveRange{
-		begin: val,
-		end:   val,
-	}
-	return ir, err
 }
