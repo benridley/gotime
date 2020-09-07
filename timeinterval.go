@@ -150,10 +150,10 @@ func (r *dayOfMonthRange) UnmarshalYAML(unmarshal func(interface{}) error) error
 		return errors.New("Start day cannot be before end day")
 	}
 	if r.begin == 0 || r.begin < -31 || r.begin > 31 {
-		return fmt.Errorf("%s is not a valid day of the month: out of range", str)
+		return fmt.Errorf("%d is not a valid day of the month: out of range", r.begin)
 	}
 	if r.end == 0 || r.end < -31 || r.end > 31 {
-		return fmt.Errorf("%s is not a valid day of the month: out of range", str)
+		return fmt.Errorf("%d is not a valid day of the month: out of range", r.end)
 	}
 	return err
 }

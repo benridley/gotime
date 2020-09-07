@@ -1,7 +1,6 @@
 package timeinterval
 
 import (
-	"io/ioutil"
 	"reflect"
 	"testing"
 	"time"
@@ -164,7 +163,7 @@ var dayOfWeekStringTestCases = []struct {
 }
 
 var yamlUnmarshalTestCases = []struct {
-	yamlPath    string
+	in          string
 	intervals   []TimeInterval
 	contains    []string
 	excludes    []string
@@ -172,7 +171,13 @@ var yamlUnmarshalTestCases = []struct {
 }{
 	{
 		// Simple business hours test
-		yamlPath: "./tests/basic.yml",
+		in: `
+---
+- weekdays: ['monday:friday']
+  times:
+    - start_time: '09:00'
+      end_time: '17:00'
+`,
 		intervals: []TimeInterval{
 			{
 				Weekdays: []weekdayRange{{inclusiveRange{begin: 1, end: 5}}},
@@ -191,7 +196,17 @@ var yamlUnmarshalTestCases = []struct {
 	},
 	{
 		// More advanced test with negative indices and ranges
-		yamlPath: "./tests/advanced.yml",
+		in: `
+---
+  # Last week, excluding Saturday, of the first quarter of the year during business hours from 2020 to 2025 and 2030-2035
+- weekdays: ['monday:friday', 'sunday']
+  months: ['january:march']
+  days_of_month: ['-7:-1']
+  years: ['2020:2025', '2030:2035']
+  times:
+    - start_time: '09:00'
+      end_time: '17:00'
+`,
 		intervals: []TimeInterval{
 			{
 				Weekdays:    []weekdayRange{{inclusiveRange{begin: 1, end: 5}}, {inclusiveRange{begin: 0, end: 0}}},
@@ -217,22 +232,60 @@ var yamlUnmarshalTestCases = []struct {
 		},
 		expectError: false,
 	},
+	{
+		// Start day before end day
+		in: `
+---
+- weekdays: ['friday:monday']`,
+		expectError: true,
+	},
+	{
+		// Invalid weekdays
+		in: `
+---
+- weekdays: ['blurgsday:flurgsday']
+`,
+		expectError: true,
+	},
+	{
+		// 0 day of month
+		in: `
+---
+- days_of_month: ['0']
+`,
+		expectError: true,
+	},
+	{
+		// too early day of month
+		in: `
+---
+- days_of_month: ['-50:-20']
+`,
+		expectError: true,
+	},
+	{
+		// too late days of month
+		in: `
+---
+- days_of_month: ['1:-1']
+`,
+		expectError: true,
+	},
 }
 
 func TestYamlUnmarshal(t *testing.T) {
 	for _, tc := range yamlUnmarshalTestCases {
-		f, err := ioutil.ReadFile(tc.yamlPath)
-		if err != nil {
-			t.Errorf("Couldn't read test file %s", tc.yamlPath)
-		}
 		var ti []TimeInterval
-		err = yaml.Unmarshal(f, &ti)
+		err := yaml.Unmarshal([]byte(tc.in), &ti)
 		if err != nil && !tc.expectError {
-			t.Errorf("Received unexpected error: %v when parsing %v", err, tc.yamlPath)
+			t.Errorf("Received unexpected error: %v when parsing %v", err, tc.in)
 		} else if err == nil && tc.expectError {
-			t.Errorf("Expected error when unmarshalling %s but didn't receive one", tc.yamlPath)
-		} else if !reflect.DeepEqual(ti, tc.intervals) {
-			t.Errorf("Error unmarshalling %s: Want %+v, got %+v", tc.yamlPath, tc.intervals, ti)
+			t.Errorf("Expected error when unmarshalling %s but didn't receive one", tc.in)
+		} else if err != nil && tc.expectError {
+			continue
+		}
+		if !reflect.DeepEqual(ti, tc.intervals) {
+			t.Errorf("Error unmarshalling %s: Want %+v, got %+v", tc.in, tc.intervals, ti)
 		}
 		for _, ts := range tc.contains {
 			_t, _ := time.Parse(time.RFC822, ts)
@@ -303,5 +356,15 @@ func TestParseWeek(t *testing.T) {
 		} else if !reflect.DeepEqual(wr, tc.ranges) {
 			t.Errorf("Error parsing time string %s: Want %+v, got %+v", tc.dowString, tc.ranges, wr)
 		}
+	}
+}
+
+func emptyInterval() TimeInterval {
+	return TimeInterval{
+		Times:       []timeRange{},
+		Weekdays:    []weekdayRange{},
+		DaysOfMonth: []dayOfMonthRange{},
+		Months:      []monthRange{},
+		Years:       []yearRange{},
 	}
 }

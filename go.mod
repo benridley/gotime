@@ -1,4 +1,4 @@
-module example.com/m/v2
+module timeinterval
 
 go 1.14
 
