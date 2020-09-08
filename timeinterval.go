@@ -174,7 +174,7 @@ func (r *monthRange) UnmarshalYAML(unmarshal func(interface{}) error) error {
 	}
 	err := stringableRangeFromString(str, r)
 	if r.begin > r.end {
-		return errors.New("Start day cannot be before end day")
+		return errors.New("Start month cannot be before end month")
 	}
 	if r.begin < 1 || r.begin > 12 {
 		return fmt.Errorf("%s is not a valid month: out of range", str)

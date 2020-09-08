@@ -256,7 +256,7 @@ var yamlUnmarshalTestCases = []struct {
 		expectError: true,
 	},
 	{
-		// too early day of month
+		// Too early day of month
 		in: `
 ---
 - days_of_month: ['-50:-20']
@@ -264,7 +264,7 @@ var yamlUnmarshalTestCases = []struct {
 		expectError: true,
 	},
 	{
-		// too late days of month
+		// Negative indices should work
 		in: `
 ---
 - days_of_month: ['1:-1']
@@ -275,6 +275,22 @@ var yamlUnmarshalTestCases = []struct {
 			},
 		},
 		expectError: false,
+	},
+	{
+		// Negative start date before positive end date
+		in: `
+---
+- days_of_month: ['-15:5']
+`,
+		expectError: true,
+	},
+	{
+		// Negative end date before positive postive start date
+		in: `
+---
+- days_of_month: ['10:-25']
+`,
+		expectError: true,
 	},
 }
 
