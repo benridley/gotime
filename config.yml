@@ -1,7 +1,0 @@
-- name: business_hours
-  minutes:
-  hours: 09-17
-  dates:
-  months:
-  days: ['monday', 'tuesday', 'wednesday', 'thursday', 'friday']
-  timeperiod:
