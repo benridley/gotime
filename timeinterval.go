@@ -59,9 +59,9 @@ type yamlTimeRange struct {
 
 // A range with a beginning and end that can be represented as strings
 type stringableRange interface {
-	// Try to map a member of the range into an integer.
 	setBegin(int)
 	setEnd(int)
+	// Try to map a member of the range into an integer.
 	memberFromString(string) (int, error)
 }
 
@@ -146,14 +146,23 @@ func (r *dayOfMonthRange) UnmarshalYAML(unmarshal func(interface{}) error) error
 		return err
 	}
 	err := stringableRangeFromString(str, r)
-	if r.begin > r.end {
-		return errors.New("Start day cannot be before end day")
-	}
 	if r.begin == 0 || r.begin < -31 || r.begin > 31 {
 		return fmt.Errorf("%d is not a valid day of the month: out of range", r.begin)
 	}
 	if r.end == 0 || r.end < -31 || r.end > 31 {
 		return fmt.Errorf("%d is not a valid day of the month: out of range", r.end)
+	}
+	// Check beginning <= end accounting for negatives day of month indices
+	trueBegin := r.begin
+	trueEnd := r.end
+	if r.begin < 0 {
+		trueBegin = 30 + r.begin
+	}
+	if r.end < 0 {
+		trueEnd = 30 + r.end
+	}
+	if trueBegin > trueEnd {
+		return errors.New("Start day cannot be before end day")
 	}
 	return err
 }

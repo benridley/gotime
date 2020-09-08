@@ -269,7 +269,12 @@ var yamlUnmarshalTestCases = []struct {
 ---
 - days_of_month: ['1:-1']
 `,
-		expectError: true,
+		intervals: []TimeInterval{
+			{
+				DaysOfMonth: []dayOfMonthRange{{inclusiveRange{1, -1}}},
+			},
+		},
+		expectError: false,
 	},
 }
 
