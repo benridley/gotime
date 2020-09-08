@@ -1,4 +1,4 @@
-module gotime
+module github.com/benridley/gotime
 
 go 1.14
 
