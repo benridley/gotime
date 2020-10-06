@@ -7,18 +7,16 @@ import (
 	"strconv"
 	"strings"
 	"time"
-
-	"gopkg.in/yaml.v2"
 )
 
 // TimeInterval describes intervals of time. ContainsTime will tell you if a golang time is contained
 // within the interval.
 type TimeInterval struct {
-	Times       []TimeRange       `yaml:"times"`
-	Weekdays    []WeekdayRange    `yaml:"weekdays"`
-	DaysOfMonth []DayOfMonthRange `yaml:"days_of_month"`
-	Months      []MonthRange      `yaml:"months"`
-	Years       []YearRange       `yaml:"years"`
+	Times       []TimeRange       `yaml:"times,omitempty"`
+	Weekdays    []WeekdayRange    `yaml:"weekdays,flow,omitempty"`
+	DaysOfMonth []DayOfMonthRange `yaml:"days_of_month,flow,omitempty"`
+	Months      []MonthRange      `yaml:"months,flow,omitempty"`
+	Years       []YearRange       `yaml:"years,flow,omitempty"`
 }
 
 /* TimeRange represents a range of minutes within a 1440 minute day, exclusive of the End minute. A day consists of 1440 minutes.
@@ -94,7 +92,10 @@ func (r *WeekdayRange) memberFromString(in string) (out int, err error) {
 func (r *MonthRange) memberFromString(in string) (out int, err error) {
 	out, ok := months[in]
 	if !ok {
-		return -1, fmt.Errorf("%s is not a valid weekday", in)
+		out, err = strconv.Atoi(in)
+		if err != nil {
+			return -1, fmt.Errorf("%s is not a valid month", in)
+		}
 	}
 	return out, nil
 }
@@ -168,7 +169,7 @@ func (r *WeekdayRange) UnmarshalYAML(unmarshal func(interface{}) error) error {
 }
 
 // MarshalYAML implements the yaml.Marshaler interface for WeekdayRange
-func (r *WeekdayRange) MarshalYAML() (interface{}, error) {
+func (r WeekdayRange) MarshalYAML() (interface{}, error) {
 	beginStr, ok := daysOfWeekInv[r.Begin]
 	if !ok {
 		return nil, fmt.Errorf("Unable to convert %d into weekday string", r.Begin)
@@ -232,7 +233,7 @@ func (r *MonthRange) UnmarshalYAML(unmarshal func(interface{}) error) error {
 }
 
 // MarshalYAML implements the yaml.Marshaler interface for DayOfMonthRange
-func (r *MonthRange) MarshalYAML() (interface{}, error) {
+func (r MonthRange) MarshalYAML() (interface{}, error) {
 	beginStr, ok := monthsInv[r.Begin]
 	if !ok {
 		return nil, fmt.Errorf("Unable to convert %d into month", r.Begin)
@@ -292,16 +293,21 @@ func (tr *TimeRange) UnmarshalYAML(unmarshal func(interface{}) error) error {
 }
 
 //MarshalYAML implements the yaml.Marshaler interface for TimeRange
-func (tr *TimeRange) MarshalYAML() (out interface{}, err error) {
-	startStr := fmt.Sprintf("%0d", tr.StartMinute)
-	endStr := fmt.Sprintf("%0d", tr.EndMinute)
-	yamlTr := yamlTimeRange{startStr, endStr}
-	out, err = yaml.Marshal(&yamlTr)
-	return out, err
+func (tr TimeRange) MarshalYAML() (out interface{}, err error) {
+	startHr := tr.StartMinute / 60
+	endHr := tr.EndMinute / 60
+	startMin := tr.StartMinute % 60
+	endMin := tr.EndMinute % 60
+
+	startStr := fmt.Sprintf("%02d:%02d", startHr, startMin)
+	endStr := fmt.Sprintf("%02d:%02d", endHr, endMin)
+
+	yTr := yamlTimeRange{startStr, endStr}
+	return interface{}(yTr), err
 }
 
 //MarshalYAML implements the yaml.Marshaler interface for InclusiveRange
-func (ir *InclusiveRange) MarshalYAML() (interface{}, error) {
+func (ir InclusiveRange) MarshalYAML() (interface{}, error) {
 	if ir.Begin == ir.End {
 		return strconv.Itoa(ir.Begin), nil
 	}

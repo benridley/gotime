@@ -25,8 +25,8 @@ var timeIntervalTestCases = []struct {
 	{
 		// 9am to 5pm, monday to friday
 		timeInterval: TimeInterval{
-			Times:    []timeRange{{startMinute: 540, endMinute: 1020}},
-			Weekdays: []weekdayRange{{inclusiveRange{begin: 1, end: 5}}},
+			Times:    []TimeRange{{StartMinute: 540, EndMinute: 1020}},
+			Weekdays: []WeekdayRange{{InclusiveRange{Begin: 1, End: 5}}},
 		},
 		validTimeStrings: []string{
 			"04 May 20 15:04 MST",
@@ -42,9 +42,9 @@ var timeIntervalTestCases = []struct {
 	{
 		// Easter 2020
 		timeInterval: TimeInterval{
-			DaysOfMonth: []dayOfMonthRange{{inclusiveRange{begin: 4, end: 6}}},
-			Months:      []monthRange{{inclusiveRange{begin: 4, end: 4}}},
-			Years:       []yearRange{{inclusiveRange{begin: 2020, end: 2020}}},
+			DaysOfMonth: []DayOfMonthRange{{InclusiveRange{Begin: 4, End: 6}}},
+			Months:      []MonthRange{{InclusiveRange{Begin: 4, End: 4}}},
+			Years:       []YearRange{{InclusiveRange{Begin: 2020, End: 2020}}},
 		},
 		validTimeStrings: []string{
 			"04 Apr 20 15:04 MST",
@@ -62,7 +62,7 @@ var timeIntervalTestCases = []struct {
 	{
 		// Check negative days of month, last 3 days of each month
 		timeInterval: TimeInterval{
-			DaysOfMonth: []dayOfMonthRange{{inclusiveRange{begin: -3, end: -1}}},
+			DaysOfMonth: []DayOfMonthRange{{InclusiveRange{Begin: -3, End: -1}}},
 		},
 		validTimeStrings: []string{
 			"31 Jan 20 15:04 MST",
@@ -84,8 +84,8 @@ var timeIntervalTestCases = []struct {
 	{
 		// Check out of bound days are clamped to month boundaries
 		timeInterval: TimeInterval{
-			Months:      []monthRange{{inclusiveRange{begin: 6, end: 6}}},
-			DaysOfMonth: []dayOfMonthRange{{inclusiveRange{begin: -31, end: 31}}},
+			Months:      []MonthRange{{InclusiveRange{Begin: 6, End: 6}}},
+			DaysOfMonth: []DayOfMonthRange{{InclusiveRange{Begin: -31, End: 31}}},
 		},
 		validTimeStrings: []string{
 			"30 Jun 20 00:00 MST",
@@ -100,64 +100,64 @@ var timeIntervalTestCases = []struct {
 
 var timeStringTestCases = []struct {
 	timeString  string
-	timeRange   timeRange
+	TimeRange   TimeRange
 	expectError bool
 }{
 	{
 		timeString:  "{'start_time': '00:00', 'end_time': '24:00'}",
-		timeRange:   timeRange{startMinute: 0, endMinute: 1440},
+		TimeRange:   TimeRange{StartMinute: 0, EndMinute: 1440},
 		expectError: false,
 	},
 	{
 		timeString:  "{'start_time': '01:35', 'end_time': '17:39'}",
-		timeRange:   timeRange{startMinute: 95, endMinute: 1059},
+		TimeRange:   TimeRange{StartMinute: 95, EndMinute: 1059},
 		expectError: false,
 	},
 	{
 		timeString:  "{'start_time': '09:35', 'end_time': '09:39'}",
-		timeRange:   timeRange{startMinute: 575, endMinute: 579},
+		TimeRange:   TimeRange{StartMinute: 575, EndMinute: 579},
 		expectError: false,
 	},
 	{
-		// Error: begin and end times are the same
+		// Error: Begin and End times are the same
 		timeString:  "{'start_time': '17:31', 'end_time': '17:31'}",
-		timeRange:   timeRange{},
+		TimeRange:   TimeRange{},
 		expectError: true,
 	},
 	{
-		// Error: end time out of range
+		// Error: End time out of range
 		timeString:  "{'start_time': '12:30', 'end_time': '24:01'}",
-		timeRange:   timeRange{},
+		TimeRange:   TimeRange{},
 		expectError: true,
 	},
 	{
-		// Error: Start time greater than end time
+		// Error: Start time greater than End time
 		timeString:  "{'start_time': '09:30', 'end_time': '07:41'}",
-		timeRange:   timeRange{},
+		TimeRange:   TimeRange{},
 		expectError: true,
 	},
 	{
-		// Error: Start time out of range and greater than end time
+		// Error: Start time out of range and greater than End time
 		timeString:  "{'start_time': '24:00', 'end_time': '17:41'}",
-		timeRange:   timeRange{},
+		TimeRange:   TimeRange{},
 		expectError: true,
 	},
 	{
 		// Error: No range specified
 		timeString:  "{'start_time': '14:03'}",
-		timeRange:   timeRange{},
+		TimeRange:   TimeRange{},
 		expectError: true,
 	},
 }
 
 var dayOfWeekStringTestCases = []struct {
 	dowString   string
-	ranges      []weekdayRange
+	ranges      []WeekdayRange
 	expectError bool
 }{
 	{
 		dowString:   "['monday:friday', 'saturday']",
-		ranges:      []weekdayRange{{inclusiveRange{begin: 1, end: 5}}, {inclusiveRange{begin: 6, end: 6}}},
+		ranges:      []WeekdayRange{{InclusiveRange{Begin: 1, End: 5}}, {InclusiveRange{Begin: 6, End: 6}}},
 		expectError: false,
 	},
 }
@@ -180,8 +180,8 @@ var yamlUnmarshalTestCases = []struct {
 `,
 		intervals: []TimeInterval{
 			{
-				Weekdays: []weekdayRange{{inclusiveRange{begin: 1, end: 5}}},
-				Times:    []timeRange{{startMinute: 540, endMinute: 1020}},
+				Weekdays: []WeekdayRange{{InclusiveRange{Begin: 1, End: 5}}},
+				Times:    []TimeRange{{StartMinute: 540, EndMinute: 1020}},
 			},
 		},
 		contains: []string{
@@ -209,11 +209,11 @@ var yamlUnmarshalTestCases = []struct {
 `,
 		intervals: []TimeInterval{
 			{
-				Weekdays:    []weekdayRange{{inclusiveRange{begin: 1, end: 5}}, {inclusiveRange{begin: 0, end: 0}}},
-				Times:       []timeRange{{startMinute: 540, endMinute: 1020}},
-				Months:      []monthRange{{inclusiveRange{1, 3}}},
-				DaysOfMonth: []dayOfMonthRange{{inclusiveRange{-7, -1}}},
-				Years:       []yearRange{{inclusiveRange{2020, 2025}}, {inclusiveRange{2030, 2035}}},
+				Weekdays:    []WeekdayRange{{InclusiveRange{Begin: 1, End: 5}}, {InclusiveRange{Begin: 0, End: 0}}},
+				Times:       []TimeRange{{StartMinute: 540, EndMinute: 1020}},
+				Months:      []MonthRange{{InclusiveRange{1, 3}}},
+				DaysOfMonth: []DayOfMonthRange{{InclusiveRange{-7, -1}}},
+				Years:       []YearRange{{InclusiveRange{2020, 2025}}, {InclusiveRange{2030, 2035}}},
 			},
 		},
 		contains: []string{
@@ -233,7 +233,7 @@ var yamlUnmarshalTestCases = []struct {
 		expectError: false,
 	},
 	{
-		// Start day before end day
+		// Start day before End day
 		in: `
 ---
 - weekdays: ['friday:monday']`,
@@ -271,13 +271,13 @@ var yamlUnmarshalTestCases = []struct {
 `,
 		intervals: []TimeInterval{
 			{
-				DaysOfMonth: []dayOfMonthRange{{inclusiveRange{1, -1}}},
+				DaysOfMonth: []DayOfMonthRange{{InclusiveRange{1, -1}}},
 			},
 		},
 		expectError: false,
 	},
 	{
-		// Negative start date before positive end date
+		// Negative start date before positive End date
 		in: `
 ---
 - days_of_month: ['-15:5']
@@ -285,7 +285,7 @@ var yamlUnmarshalTestCases = []struct {
 		expectError: true,
 	},
 	{
-		// Negative end date before positive postive start date
+		// Negative End date before positive postive start date
 		in: `
 ---
 - days_of_month: ['10:-25']
@@ -354,21 +354,21 @@ func TestContainsTime(t *testing.T) {
 
 func TestParseTimeString(t *testing.T) {
 	for _, tc := range timeStringTestCases {
-		var tr timeRange
+		var tr TimeRange
 		err := yaml.Unmarshal([]byte(tc.timeString), &tr)
 		if err != nil && !tc.expectError {
 			t.Errorf("Received unexpected error: %v when parsing %v", err, tc.timeString)
 		} else if err == nil && tc.expectError {
 			t.Errorf("Expected error for invalid string %s but didn't receive one", tc.timeString)
-		} else if !reflect.DeepEqual(tr, tc.timeRange) {
-			t.Errorf("Error parsing time string %s: Want %+v, got %+v", tc.timeString, tc.timeRange, tr)
+		} else if !reflect.DeepEqual(tr, tc.TimeRange) {
+			t.Errorf("Error parsing time string %s: Want %+v, got %+v", tc.timeString, tc.TimeRange, tr)
 		}
 	}
 }
 
 func TestParseWeek(t *testing.T) {
 	for _, tc := range dayOfWeekStringTestCases {
-		var wr []weekdayRange
+		var wr []WeekdayRange
 		err := yaml.Unmarshal([]byte(tc.dowString), &wr)
 		if err != nil && !tc.expectError {
 			t.Errorf("Received unexpected error: %v when parsing %v", err, tc.dowString)
@@ -380,12 +380,34 @@ func TestParseWeek(t *testing.T) {
 	}
 }
 
+func TestYamlMarshal(t *testing.T) {
+	for _, tc := range yamlUnmarshalTestCases {
+		if tc.expectError {
+			continue
+		}
+		var ti []TimeInterval
+		err := yaml.Unmarshal([]byte(tc.in), &ti)
+		if err != nil {
+			t.Error(err)
+		}
+		out, err := yaml.Marshal(&ti)
+		if err != nil {
+			t.Error(err)
+		}
+		var ti2 []TimeInterval
+		yaml.Unmarshal(out, &ti2)
+		if !reflect.DeepEqual(ti, ti2) {
+			t.Errorf("Re-marshalling %s produced a different TimeInterval", tc.in)
+		}
+	}
+}
+
 func emptyInterval() TimeInterval {
 	return TimeInterval{
-		Times:       []timeRange{},
-		Weekdays:    []weekdayRange{},
-		DaysOfMonth: []dayOfMonthRange{},
-		Months:      []monthRange{},
-		Years:       []yearRange{},
+		Times:       []TimeRange{},
+		Weekdays:    []WeekdayRange{},
+		DaysOfMonth: []DayOfMonthRange{},
+		Months:      []MonthRange{},
+		Years:       []YearRange{},
 	}
 }
